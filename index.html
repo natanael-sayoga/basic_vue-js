@@ -9,37 +9,22 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 </head>
 <body>
-    <nav id="myHeader" class="navbar navbar-expand-lg" 
-        v-bind:class="{
-            'navbar-dark bg-dark': darkMode==true,
-            'navbar-light bg-light': darkMode==false
-        }">
-        <div class="container-fluid">
-            <a href="#" class="navbar-brand">My Vue</a>
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li v-for="(header, index) in headers" class="nav-item" v-bind:key="index">
-                    <!-- always apply "nav-link" style, if the link is clicked, apply "active" -->
-                    <a 
-                        class="nav-link"
-                        v-bind:class="{active:currentPage==index}"
-
-                        v-bind:href="header.url" 
-                        v-bind:title="`go to ${header.text} Page`" 
-                        aria-current="page"
-                        v-on:click.prevent="currentPage = index"
-                    >{{header.text}}</a>
-                </li>
-            </ul>
-            <button class="btn btn-primary" v-on:click="darkMode = !darkMode">Dark Mode</button>
-        </div>
-    </nav>
-    <div id="content" class="container">
-        <h1>{{ pages[currentPage].pageTitle }}</h1>
-        <p>{{ pages[currentPage].content }}</p>
-    </div>
+    <page-navbar 
+        v-bind:pages="pages" 
+        v-bind:headers="headers"
+        v-bind:on-click-listener="(index) => {currentPage = index}">
+    </page-navbar>
+    <page-content 
+        v-bind:page="pages[currentPage]">
+    </page-content>
+    <!-- the markup bellow are being replace as a component: -->
+    <!-- <div id="content" class="container">
+        <h1>{{pages[currentPage].pageTitle}}</h1>
+        <p>{{pages[currentPage].content}}</p>
+    </div> -->
 
     <script>
-        Vue.createApp({
+        let app = Vue.createApp({
             //we will create an App based on THIS object, every object can contain a data()
             data(){
                 return{
@@ -68,11 +53,70 @@
                             pageTitle: "Welcome to Contacts Page",
                             content: "CONTACTS PAGE CONTENTS"
                         },
-                    ],
-                    darkMode:false
+                    ]
                 }
             }
-        }).mount('body');
+        })
+        //
+        app.component('page-content', {
+            //we will create page-content as its own component
+            //in practice this will be displayed like a normal
+            //HTML Tag
+
+            //component name must be written in LOWERCASE -> 'page-content'
+            props: ['page'],
+            template: `
+                    <div id="content" class="container">
+                        <h1>{{page.pageTitle}}</h1>
+                        <p>{{page.content}}</p>
+                    </div>
+            `
+        })
+
+        app.component('page-navbar', {
+            props: ['pages', 'headers', 'on-click-listener'],
+            template:`
+                <nav id="myHeader" class="navbar navbar-expand-lg" 
+                    v-bind:class="{
+                        'navbar-dark bg-dark': theme=='dark',
+                        'navbar-light bg-light': theme=='light'
+                    }">
+                    <div class="container-fluid">
+                        <a href="#" class="navbar-brand">My Vue</a>
+                        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                            <li v-for="(header, index) in headers" class="nav-item" v-bind:key="index">
+                                <a 
+                                    class="nav-link"
+                                    v-bind:class="{active:currentPage==index}"
+
+                                    v-bind:href="header.url" 
+                                    v-bind:title="\`go to \${header.text} Page\`" 
+                                    aria-current="page"
+                                    v-on:click.prevent="onClickListener(index)"
+                                >{{header.text}}</a>
+                            </li>
+                        </ul>
+                        <button class="btn btn-primary" v-on:click.prevent="changeTheme()">Dark Mode</button>
+                    </div>
+                </nav>
+            `,
+            data(){
+                return {
+                    theme: 'light'
+                }
+            },
+            methods: {
+                changeTheme(){
+                    let default_theme = "light"
+                    if(this.theme == "light"){
+                        default_theme = "dark"
+                    }
+                    this.theme = default_theme;
+                }
+            }
+        })
+
+        app.mount("body")
     </script>
 </body>
 </html>
